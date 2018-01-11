@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Delete resource &apos;pimplyMeshCoFoam&apos;" deleteContents="true" description="Delete resource &apos;pimplyMeshCoFoam&apos;" element1="/pimplyMeshCoFoam" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1513088677571"/>
+</session>
