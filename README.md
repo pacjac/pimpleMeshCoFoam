@@ -25,12 +25,19 @@ Solver will be installed to $FOAM_USER_APPBIN
 ## Use
 In a moving mesh case, add following keywords:
 
+```
 adjustTimeStep          yes;
 
 maxCo                   value;
 maxMeshCo               value;
 maxDeltaT               value;
 minDeltaT               value;
-
+```
 
 maxMeshCo should be < 1 to prevent negative cell volumes.
+
+run from your case by typing
+
+```
+pimpleMeshCoFoam
+```
