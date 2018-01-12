@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         #include "readTimeControls.H"
         #include "CourantNo.H"
 
-        maxMeshCo =
+        scalar maxMeshCo =
             runTime.controlDict().lookupOrDefault<scalar>("maxMeshCo", 1.0);
         scalar minDeltaT =
             runTime.controlDict().lookupOrDefault<scalar>("minDeltaT", SMALL);
@@ -109,13 +109,13 @@ int main(int argc, char *argv[])
             scalar deltaTFactFluid = min(min(maxDeltaTFactFluid, 1.0 + 0.1*maxDeltaTFactFluid), 1.2);
 
             // evaluate delta T for Mesh Courant no
-            scalar maxDeltaTFactMesh = maxMeshCo/(checkMeshCourantNo + SMALL);
+            scalar maxDeltaTFactMesh = maxMeshCo/(meshCoNum + SMALL);
             scalar deltaTFactMesh = min(min(maxDeltaTFactMesh, 1.0 + 0.1*maxDeltaTFactMesh), 1.2);
 
             // Pick the smaller time step
             scalar deltaTFact = min(deltaTFactFluid, deltaTFactMesh);
 
-            if (deltaTFactFluid > deltaTFactMesh)
+            if (deltaTFactFluid < deltaTFactMesh)
             {
                 Info << "Adjusting time step according to courant number" << endl;
             }
