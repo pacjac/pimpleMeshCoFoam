@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createDynamicFvMesh.H"
     #include "initContinuityErrs.H"
-    #include "createControls.H"
+    #include "createControls.H" // local file, here we source maxMeshCo and minDeltaT
     #include "createFields.H"
     #include "createUf.H"
     #include "createFvOptions.H"
@@ -70,71 +70,49 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
-        #include "readTimeControls.H"
+        #include "readControls.H"
         #include "CourantNo.H"
-
-        scalar maxMeshCo =
-            runTime.controlDict().lookupOrDefault<scalar>("maxMeshCo", 1.0);
-        scalar minDeltaT =
-            runTime.controlDict().lookupOrDefault<scalar>("minDeltaT", SMALL);
-
-        correctPhi = pimple.dict().lookupOrDefault("correctPhi", false);
-
-        checkMeshCourantNo = pimple.dict().lookupOrDefault("checkMeshCourantNo", false);
- 
-        scalar meshCoNum = 0.0;
-        scalar meanMeshCoNum = 0.0;
-
-        if (mesh.nInternalFaces() && mesh.moving())
-        {
-            scalarField sumPhi
-            (
-                fvc::surfaceSum(mag(mesh.phi()))().primitiveField()
-            );
-
-            meshCoNum = 0.5*gMax(sumPhi/mesh.V().field())*runTime.deltaTValue();
-
-            meanMeshCoNum =
-                0.5*(gSum(sumPhi)/gSum(mesh.V().field()))*runTime.deltaTValue();
-        }
-
-        Info<< "Mesh Courant Number mean: " << meanMeshCoNum
-            << " max: " << meshCoNum << endl;
 
 
         if (adjustTimeStep && mesh.changing())
         {
-            // evaluate delta T for Courant no
-            scalar maxDeltaTFactFluid = maxCo/(CoNum + SMALL);
-            scalar deltaTFactFluid = min(min(maxDeltaTFactFluid, 1.0 + 0.1*maxDeltaTFactFluid), 1.2);
+
+            scalar meshCoNum = 0.0;
+            scalar meanMeshCoNum = 0.0;
+
+            if (mesh.nInternalFaces() && mesh.moving())
+            {
+                scalarField sumPhi
+                (
+                    fvc::surfaceSum(mag(mesh.phi()))().primitiveField()
+                );
+
+                meshCoNum = 0.5*gMax(sumPhi/mesh.V().field())*runTime.deltaTValue();
+
+                meanMeshCoNum =
+                    0.5*(gSum(sumPhi)/gSum(mesh.V().field()))*runTime.deltaTValue();
+
+                Info<< "Mesh Courant Number mean: " << meanMeshCoNum
+                    << " max: " << meshCoNum << endl;
+            }
 
             // evaluate delta T for Mesh Courant no
-            scalar maxDeltaTFactMesh = maxMeshCo/(meshCoNum + SMALL);
-            scalar deltaTFactMesh = min(min(maxDeltaTFactMesh, 1.0 + 0.1*maxDeltaTFactMesh), 1.2);
+            scalar maxDeltaTFact = 
+                min(maxMeshCo/(meshCoNum + SMALL), maxCo/(CoNum + SMALL));
 
-            // Pick the smaller time step
-            scalar deltaTFact = min(deltaTFactFluid, deltaTFactMesh);
+            scalar deltaTFact = min(min(maxDeltaTFact, 1.0 + 0.1*maxDeltaTFact), 1.2);
 
-            if (deltaTFactFluid < deltaTFactMesh)
-            {
-                Info << "Adjusting time step according to courant number" << endl;
-            }
-            else
-            {
-                Info << "Adjusting time step according to Mesh Courant number" << endl;
-            }
+            // Debug statement
+            Info << "DeltaTFact = " << deltaTFact << endl;
 
             // set delta T to be smaller than maxDeltaT but bigger than minDeltaT
+            // Currently, minDeltaT is not checked for
             runTime.setDeltaT
             (
-                max
+                min
                 (
-                    min
-                    (
-                        deltaTFact*runTime.deltaTValue(),
-                        maxDeltaT
-                    ),
-                    minDeltaT
+                    deltaTFact*runTime.deltaTValue(),
+                    maxDeltaT
                 )
             );
 
